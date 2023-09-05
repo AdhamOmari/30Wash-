@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, Image, ActivityIndicator } from 'react-native';
+import { View, TextInput, Button, StyleSheet, Text, Image } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
+import Loader from '../components/Loader';
 
 const RegisterScreen = () => {
   const [name, setName] = useState('');
@@ -52,9 +53,6 @@ const RegisterScreen = () => {
         password,
       });
 
-      console.log(name, email,
-        phoneNumber,
-        password)
       setLoading(false); // Hide the spinner
 
       navigation.navigate('Login');
@@ -131,7 +129,7 @@ const RegisterScreen = () => {
       ) : null}
       <View style={styles.buttonContainer}>
         {loading ? (
-          <ActivityIndicator size="large" color="white" />
+          <Loader />
         ) : (
           <Button title="Register" onPress={handleRegister} />
         )}

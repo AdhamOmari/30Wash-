@@ -61,6 +61,8 @@ const loginUser = async (req, res) => {
 
     // If the credentials are valid, generate a JWT token for the user
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY);
+    console.log('✅ token    ', user._id )
+    
 
     res.json({ message: 'Login successful', token });
   } catch (error) {
@@ -68,7 +70,36 @@ const loginUser = async (req, res) => {
   }
 };
 
+
+
+// Get user data by user ID
+const getUserData = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // You can customize the user data you want to return
+    const userData = {
+      name: user.name,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      // Add more user properties as needed...
+    };
+
+    res.status(200).json(userData);
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while fetching user data' });
+  }
+};
 module.exports = {
   registerUser,
   loginUser,
+  getUserData,
+
 };

@@ -1,34 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList,Button } from 'react-native';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Correct import
+import jwt_decode from 'jwt-decode';
 
 const HomeScreen = () => {
   const [washData, setWashData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null); // To store user data
 
   useEffect(() => {
     // Fetch wash data from the backend
-    axios.get('http://localhost:8000/api/subscriptions')
+    axios
+      .get('http://localhost:8000/api/subscriptions')
       .then((response) => {
-        setWashData(response.data); // Assuming the response is an array of wash data
+        setWashData(response.data);
         setLoading(false);
       })
       .catch((error) => {
         console.error('Error fetching wash data:', error);
         setLoading(false);
       });
-  }, []);
 
-  const handleSubscribe = (userId, subscriptionId) => {
+    // Fetch user ID from AsyncStorage
+    AsyncStorage.getItem('token')
+      .then((token) => {
+        if (token) {
+          const decodedToken = jwt_decode(token);
+          if (decodedToken) {
+            const userId = decodedToken.userId;
+            // Now you have the user ID (userId) available for use
+            // Set it in the component state if needed
+            setUserData({ userId }); // You can set other user data here as well
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('Error getting token from AsyncStorage:', error);
+      });
+  }, []); // Empty dependency array means this effect runs once on component mount
+
+  // Function to handle subscription
+  const handleSubscribe = (subscriptionId) => {
+    if (!userData?.userId) {
+      // Handle the case where userData is null or userId is undefined
+      console.error('User data or userId is missing');
+      return;
+    }
+
     // Make a POST request to subscribe the user to the selected offer
-
-    console.log('✅ element    ', userId)
-    console.log('✅ element    ', subscriptionId)
-    
-    axios.post('http://localhost:8000/api/subscriptions/subscribe', {
-      userId,
-      subscriptionId,
-    })
+    axios
+      .post('http://localhost:8000/api/subscriptions/subscribe', {
+        userId: userData.userId, // You can use userData.userId here
+        subscriptionId,
+      })
       .then((response) => {
         // Handle the successful subscription (e.g., show a success message)
         console.log('User subscribed successfully:', response.data);
@@ -39,13 +64,14 @@ const HomeScreen = () => {
       });
   };
 
+  // Function to render each subscription item
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.card}>
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.price}>Price: ${item.price}</Text>
       <TouchableOpacity
         style={styles.subscribeButton}
-        onPress={() => handleSubscribe('user_id_here', item._id)}
+        onPress={() => handleSubscribe(item._id)}
       >
         <Text style={styles.subscribeButtonText}>Subscribe</Text>
       </TouchableOpacity>
@@ -61,10 +87,24 @@ const HomeScreen = () => {
         <FlatList
           data={washData}
           renderItem={renderItem}
-          keyExtractor={(item) => item._id} // Assuming _id is a unique identifier
+          keyExtractor={(item) => item._id}
           style={styles.flatList}
         />
       )}
+      {userData && (
+        <View style={styles.userData}>
+          <Text>User Data:</Text>
+          <Text>User ID: {userData.userId}</Text>
+          {/* Display other user data as needed */}
+        </View>
+      )}
+      <View>
+
+        <Button
+          title="Open Drawer"
+          onPress={() => navigation.openDrawer()}
+        />
+      </View>
     </View>
   );
 };
@@ -108,6 +148,12 @@ const styles = StyleSheet.create({
   subscribeButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  userData: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#eee',
+    borderRadius: 8,
   },
 });
 

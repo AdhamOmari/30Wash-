@@ -17,5 +17,6 @@ router.get('/subscriptions/:userId', subscriptionController.getAllSubscriptionsF
 
 // Subscribe a user to a subscription
 router.post('/subscribe', subscriptionController.subscribeUserToSubscription);
+router.get('/getUserData/:userId', userController.getUserData);
 
 module.exports = router;

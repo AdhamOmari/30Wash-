@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
 const LoginScreen = () => {
@@ -16,6 +17,7 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [serverError, setServerError] = useState('');
   const navigation = useNavigation();
 
   const handleLogin = async () => {
@@ -30,6 +32,7 @@ const LoginScreen = () => {
       return;
     }
     setPasswordError('');
+    setServerError(''); // Clear any previous server error
 
     try {
       const response = await axios.post(
@@ -37,18 +40,18 @@ const LoginScreen = () => {
         {
           email,
           password,
-        } 
-    
+        }
       );
 
       if (response.status === 200) {
-        // Successful login, you can navigate to the next screen
-        navigation.navigate('Home'); // Replace 'Home' with the appropriate screen name
+        const token = response.data.token;
+        await AsyncStorage.setItem('token', token);
+        navigation.navigate('Home');
       } else {
-        // Handle login error (invalid credentials, server error, etc.)
-        console.error('Login failed');
+        setServerError('Login failed. Please check your credentials.');
       }
     } catch (error) {
+      setServerError('An error occurred while logging in. Please try again later.');
       console.error('Login error:', error);
     }
   };
@@ -87,6 +90,7 @@ const LoginScreen = () => {
         placeholderTextColor="#BDBDBD"
       />
       {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+      {serverError ? <Text style={styles.errorText}>{serverError}</Text> : null}
       <TouchableOpacity
         style={[
           styles.loginButton,
@@ -115,7 +119,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1E1E1E', // Dark background color
+    backgroundColor: '#1E1E1E',
   },
   logo: {
     width: 120,
@@ -127,18 +131,14 @@ const styles = StyleSheet.create({
     width: '80%',
     marginBottom: 15,
     padding: 15,
-    backgroundColor: '#323232', // Darker input background
+    backgroundColor: '#323232',
     color: 'white',
     borderRadius: 8,
   },
-  iosInput: {
-    // Customize iOS text input styles here
-  },
-  androidInput: {
-    // Customize Android text input styles here
-  },
+  iosInput: {},
+  androidInput: {},
   errorText: {
-    color: '#E57373', // Error text color
+    color: '#E57373',
     marginBottom: 10,
     alignSelf: 'flex-start',
   },
@@ -148,11 +148,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iosButton: {
-    backgroundColor: '#007AFF', // Primary button color for iOS
+    backgroundColor: '#007AFF',
     width: '80%',
   },
   androidButton: {
-    backgroundColor: '#007AFF', // Primary button color for Android
+    backgroundColor: '#007AFF',
     width: '80%',
   },
   buttonText: {
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   registerLink: {
-    color: '#007AFF', // Link color
+    color: '#007AFF',
     fontWeight: 'bold',
   },
 });
